@@ -1,0 +1,43 @@
+# Sample workflow
+name: Deploy Dockerhub
+
+on:
+  push:
+    branches:
+      - in-dev
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 17
+        uses: actions/checkout@v2
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Restore Maven Package
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('/*.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker image
+        run: docker build -t chichia/moto:latest .
+
+      - name: Push Docker image to Docker Hub
+        run: docker push chichia/moto:latest
