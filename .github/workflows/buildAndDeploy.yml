@@ -44,9 +44,9 @@ jobs:
 
       - name: Deploy to AWS EC2
         run: |
-          chmod 400 ${{secret.AWS_PEM}}
+          chmod 400 ${{secrets.AWS_PEM}}
           
-          ssh -o StrictHostKeyChecking=no -i ${{secret.AWS_PEM}} ubuntu@${{secret.AWS_IP_ADDRESS}} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ${{secrets.AWS_PEM}} ubuntu@${{secrets.AWS_IP_ADDRESS}} << 'EOF'
              docker pull chichia/moto:latest
              docker stop moto || true
              docker rm moto || true
