@@ -58,32 +58,24 @@
 #             exit
 #          EOF
 #
-#      # New SSH session to pull and run the Docker container
 #      - name: Pull and run Docker container
 #        run: |
 #          ssh -o StrictHostKeyChecking=no -i aws_key.pem ubuntu@${{ secrets.AWS_IP_ADDRESS }} << 'EOF'
+#             # Stop and remove any existing container with the same name
+#             if [ "$(docker ps -aq -f name=moto-class-container)" ]; then
+#               docker stop moto-class-container
+#               docker rm moto-class-container
+#             fi
+#
 #             # Pull the latest Docker image
 #             docker pull chichia/moto:latest
 #
-##             # Stop and remove any existing containers
-##             docker stop moto || true
-##             docker rm moto || true
-#
-#          # Stop and remove any existing container with the same name
-#          if [ "$(docker ps -aq -f name=moto-class-container)" ]; then
-#            docker stop moto-class-container
-#            docker rm moto-class-container
-#          fi
-#
-#          # Pull the latest image and run it
-##          sudo docker pull chichia/moto:latest
-#
-#             # Run the new container
-#             docker run -d --name moto-container -p 8080:8082 chichia/moto:latest
+#             # Run the new container with the .env file
+#             sudo docker run -d --env-file=.env --name moto-class-container -p 8080:8082 chichia/moto:latest
 #          EOF
+#
 
-
-name: Deploy to AWS EC2
+name: Deploy Dockerhub
 
 on:
   push:
@@ -125,22 +117,18 @@ jobs:
       - name: Push Docker image to Docker Hub
         run: docker push chichia/moto:latest
 
-      - name: Create PEM file
-        run: |
-          echo "${{ secrets.AWS_PEM }}" > aws_key.pem
-          chmod 400 aws_key.pem
-
       - name: Deploy to AWS EC2
+        env:
+          PRIVATE_KEY: ${{ secrets.AWS_PEM }}
+          INSTANCE_IP: ${{ secrets.AWS_IP_ADDRESS }}
         run: |
-          ssh -o StrictHostKeyChecking=no -i aws_key.pem ubuntu@${{ secrets.AWS_IP_ADDRESS }} << 'EOF'
-             # Add ubuntu user to docker group
-             sudo usermod -aG docker ubuntu
-          
-             # Restart docker service
-             sudo systemctl restart docker
-          
-             # Refresh user session (forces Docker group permissions)
-             exit
+          echo "$PRIVATE_KEY" > aws_key.pem
+                 chmod 600 aws_key.pem
+                 mkdir -p ~/.ssh
+                 ssh-keyscan -H $INSTANCE_IP >> ~/.ssh/known_hosts
+                 ssh -i aws_key.pem ubuntu@$INSTANCE_IP << 'EOF'
+                   sudo docker pull chichia/moto:latest
+                   sudo docker run -d -p 8081:8081 chichia/moto:latest
           EOF
 
       - name: Pull and run Docker container
