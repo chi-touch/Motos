@@ -65,9 +65,18 @@ jobs:
              # Pull the latest Docker image
              docker pull chichia/moto:latest
           
-             # Stop and remove any existing containers
-             docker stop moto || true
-             docker rm moto || true
+#             # Stop and remove any existing containers
+#             docker stop moto || true
+#             docker rm moto || true
+          
+          # Stop and remove any existing container with the same name
+          if [ "$(docker ps -aq -f name=moto-class-container)" ]; then
+            docker stop moto-class-container
+            docker rm moto-class-container
+          fi
+          
+          # Pull the latest image and run it
+#          sudo docker pull chichia/moto:latest
           
              # Run the new container
              docker run -d --name moto-container -p 8080:8082 chichia/moto:latest
