@@ -70,5 +70,5 @@ jobs:
              docker rm moto || true
           
              # Run the new container
-             docker run -d --name moto-container -p 8080:8080 chichia/moto:latest
+             docker run -d --name moto-container -p 8080:8082 chichia/moto:latest
           EOF
