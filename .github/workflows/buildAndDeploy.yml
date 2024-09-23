@@ -157,4 +157,6 @@ jobs:
           
              # Run the new container
              docker run -d --name moto-class-container -p 8080:8082 chichia/moto:latest
+            sudo docker run -d --env-file=.env --name connt-class-container chichia/moto:latest
+        
           EOF
