@@ -153,6 +153,7 @@ jobs:
              fi
           
              # Pull the latest Docker image
+          
              docker pull chichia/moto:latest
           
              # Run the new container
