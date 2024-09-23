@@ -41,3 +41,15 @@ jobs:
 
       - name: Push Docker image to Docker Hub
         run: docker push chichia/moto:latest
+
+      - name: Deploy to AWS EC2
+        run: |
+          chmod 400 ${{secret.AWS_PEM}}
+          
+          ssh -o StrictHostKeyChecking=no -i ${{secret.AWS_PEM}} ubuntu@${{secret.AWS_IP_ADDRESS}} << 'EOF'
+             docker pull chichia/moto:latest
+             docker stop moto || true
+             docker rm moto || true
+          
+             docker run -d --name moto-container -p 8080:8080 chichia/moto:latest
+          EOF
