@@ -40,9 +40,6 @@ jobs:
       - name: Push Docker image to Docker Hub
         run: docker push chichia/moto:latest
 
-      - name: Free up port 8082 (if in use)
-        run: ssh -o StrictHostKeyChecking=no -i aws_key.pem ubuntu@${{ secrets.AWS_IP_ADDRESS }} "sudo fuser -k 8082/tcp"
-
       - name: Pull and run Docker container
         env:
           PRIVATE_KEY: ${{ secrets.AWS_PEM }}
