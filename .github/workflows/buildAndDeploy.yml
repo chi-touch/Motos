@@ -41,18 +41,38 @@ jobs:
         run: docker push chichia/moto:latest
 
       - name: Free up port 8082 (if in use)
-        run: ssh -o StrictHostKeyChecking=no -i aws_key.pem ubuntu@${{ secrets.AWS_IP_ADDRESS }} "sudo fuser -k 8082/tcp"
+        env:
+          PRIVATE_KEY: ${{ secrets.AWS_PEM }}
+          INSTANCE_IP: ${{ secrets.AWS_IP_ADDRESS }}
+        run: |
+          # Create the SSH key file
+          echo "$PRIVATE_KEY" > aws_key.pem
+          chmod 600 aws_key.pem
+          mkdir -p ~/.ssh
+          ssh-keyscan -H $INSTANCE_IP >> ~/.ssh/known_hosts
+          
+          # List files to verify the key exists
+          ls -l
+
+          # Free up port 8082 if in use
+          ssh -o StrictHostKeyChecking=no -i aws_key.pem ubuntu@$INSTANCE_IP "sudo fuser -k 8082/tcp"
 
       - name: Pull and run Docker container
         env:
           PRIVATE_KEY: ${{ secrets.AWS_PEM }}
           INSTANCE_IP: ${{ secrets.AWS_IP_ADDRESS }}
         run: |
+          # Create the SSH key file
           echo "$PRIVATE_KEY" > aws_key.pem
           chmod 600 aws_key.pem
           mkdir -p ~/.ssh
           ssh-keyscan -H $INSTANCE_IP >> ~/.ssh/known_hosts
-          ssh -i aws_key.pem ubuntu@$INSTANCE_IP << 'EOF'
+          
+          # List files to verify the key exists
+          ls -l
+
+          # SSH into the instance to manage the Docker container
+          ssh -o StrictHostKeyChecking=no -i aws_key.pem ubuntu@$INSTANCE_IP << 'EOF'
              # Stop and remove any existing container with the same name
              if [ "$(docker ps -aq -f name=moto-class-container)" ]; then
                docker stop moto-class-container
