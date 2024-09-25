@@ -37,7 +37,10 @@ jobs:
       - name: Build Docker image
         run: docker build -t chichia/moto:latest .
 
-      - name: Free up port 8082 (if in use)
+      - name: Push Docker image to Docker Hub
+        run: docker push chichia/moto:latest
+
+      - name: Deploy to AWS EC2
         env:
           PRIVATE_KEY: ${{ secrets.AWS_PEM }}
           INSTANCE_IP: ${{ secrets.AWS_IP_ADDRESS }}
@@ -46,42 +49,26 @@ jobs:
           chmod 600 aws_key.pem
           mkdir -p ~/.ssh
           ssh-keyscan -H $INSTANCE_IP >> ~/.ssh/known_hosts
+          ssh -i aws_key.pem ubuntu@$INSTANCE_IP << 'EOF'
+            sudo docker pull chichia/moto:latest
+            sudo docker run -d -p 8082:8081 chichia/moto:latest
+          EOF
 
-          # Check if the key file was created successfully
-          if [ ! -f aws_key.pem ]; then
-            echo "aws_key.pem not found!"
-            exit 1
-          fi
-
-          # Run the SSH command to free up port 8082
-          ssh -o StrictHostKeyChecking=no -i aws_key.pem ubuntu@$INSTANCE_IP "sudo fuser -k 8082/tcp"
+      - name: Free up port 8082 (if in use)
+        run: ssh -o StrictHostKeyChecking=no -i aws_key.pem ubuntu@${{ secrets.AWS_IP_ADDRESS }} "sudo fuser -k 8082/tcp"
 
       - name: Pull and run Docker container
-        env:
-          PRIVATE_KEY: ${{ secrets.AWS_PEM }}
-          INSTANCE_IP: ${{ secrets.AWS_IP_ADDRESS }}
         run: |
-          echo "$PRIVATE_KEY" > aws_key.pem
-          chmod 600 aws_key.pem
-          mkdir -p ~/.ssh
-          ssh-keyscan -H $INSTANCE_IP >> ~/.ssh/known_hosts
-          
-          # Check if the key file was created successfully
-          if [ ! -f aws_key.pem ]; then
-            echo "aws_key.pem not found!"
-            exit 1
-          fi
+          ssh -o StrictHostKeyChecking=no -i aws_key.pem ubuntu@${{ secrets.AWS_IP_ADDRESS }} << 'EOF'
+             # Stop and remove any existing container with the same name
+             if [ "$(docker ps -aq -f name=moto-class-container)" ]; then
+               docker stop moto-class-container
+               docker rm moto-class-container
+             fi
 
-          ssh -i aws_key.pem ubuntu@$INSTANCE_IP << 'EOF'
-            # Stop and remove any existing container with the same name
-            if [ "$(docker ps -aq -f name=moto-class-container)" ]; then
-              docker stop moto-class-container
-              docker rm moto-class-container
-            fi
+             # Pull the latest Docker image
+             docker pull chichia/moto:latest
 
-            # Pull the latest Docker image
-            docker pull chichia/moto:latest
-
-            # Run the new container with the correct port mapping (8083 on the host)
-            sudo docker run -d --name moto-class-container -p 8083:8081 chichia/moto:latest
+             # Run the new container with the correct port mapping (8083 on the host)
+             sudo docker run -d --name moto-class-container -p 8083:8081 chichia/moto:latest
           EOF
