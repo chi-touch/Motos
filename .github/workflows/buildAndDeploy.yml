@@ -54,6 +54,9 @@ jobs:
             sudo docker run -d -p 8082:8081 chichia/moto:latest
           EOF
 
+      - name: Free up port 8082 (if in use)
+        run: ssh -o StrictHostKeyChecking=no -i aws_key.pem ubuntu@${{ secrets.AWS_IP_ADDRESS }} "sudo fuser -k 8082/tcp"
+
       - name: Pull and run Docker container
         run: |
           ssh -o StrictHostKeyChecking=no -i aws_key.pem ubuntu@${{ secrets.AWS_IP_ADDRESS }} << 'EOF'
@@ -66,6 +69,6 @@ jobs:
              # Pull the latest Docker image
              docker pull chichia/moto:latest
 
-             # Run the new container with the correct port mapping (8082 on the host)
-             sudo docker run -d --name moto-class-container -p 8082:8081 chichia/moto:latest
+             # Run the new container with the correct port mapping (8083 on the host)
+             sudo docker run -d --name moto-class-container -p 8083:8081 chichia/moto:latest
           EOF
