@@ -40,7 +40,10 @@ jobs:
       - name: Push Docker image to Docker Hub
         run: docker push chichia/moto:latest
 
-      - name: Deploy to AWS EC2
+      - name: Free up port 8082 (if in use)
+        run: ssh -o StrictHostKeyChecking=no -i aws_key.pem ubuntu@${{ secrets.AWS_IP_ADDRESS }} "sudo fuser -k 8082/tcp"
+
+      - name: Pull and run Docker container
         env:
           PRIVATE_KEY: ${{ secrets.AWS_PEM }}
           INSTANCE_IP: ${{ secrets.AWS_IP_ADDRESS }}
@@ -50,16 +53,6 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H $INSTANCE_IP >> ~/.ssh/known_hosts
           ssh -i aws_key.pem ubuntu@$INSTANCE_IP << 'EOF'
-            sudo docker pull chichia/moto:latest
-            sudo docker run -d -p 8082:8081 chichia/moto:latest
-          EOF
-
-      - name: Free up port 8082 (if in use)
-        run: ssh -o StrictHostKeyChecking=no -i aws_key.pem ubuntu@${{ secrets.AWS_IP_ADDRESS }} "sudo fuser -k 8082/tcp"
-
-      - name: Pull and run Docker container
-        run: |
-          ssh -o StrictHostKeyChecking=no -i aws_key.pem ubuntu@${{ secrets.AWS_IP_ADDRESS }} << 'EOF'
              # Stop and remove any existing container with the same name
              if [ "$(docker ps -aq -f name=moto-class-container)" ]; then
                docker stop moto-class-container
