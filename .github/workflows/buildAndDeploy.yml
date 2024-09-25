@@ -38,7 +38,23 @@ jobs:
         run: docker build -t chichia/moto:latest .
 
       - name: Free up port 8082 (if in use)
-        run: ssh -o StrictHostKeyChecking=no -i aws_key.pem ubuntu@${{ secrets.AWS_IP_ADDRESS }} "sudo fuser -k 8082/tcp"
+        env:
+          PRIVATE_KEY: ${{ secrets.AWS_PEM }}
+          INSTANCE_IP: ${{ secrets.AWS_IP_ADDRESS }}
+        run: |
+          echo "$PRIVATE_KEY" > aws_key.pem
+          chmod 600 aws_key.pem
+          mkdir -p ~/.ssh
+          ssh-keyscan -H $INSTANCE_IP >> ~/.ssh/known_hosts
+
+          # Check if the key file was created successfully
+          if [ ! -f aws_key.pem ]; then
+            echo "aws_key.pem not found!"
+            exit 1
+          fi
+
+          # Run the SSH command to free up port 8082
+          ssh -o StrictHostKeyChecking=no -i aws_key.pem ubuntu@$INSTANCE_IP "sudo fuser -k 8082/tcp"
 
       - name: Pull and run Docker container
         env:
@@ -49,6 +65,13 @@ jobs:
           chmod 600 aws_key.pem
           mkdir -p ~/.ssh
           ssh-keyscan -H $INSTANCE_IP >> ~/.ssh/known_hosts
+          
+          # Check if the key file was created successfully
+          if [ ! -f aws_key.pem ]; then
+            echo "aws_key.pem not found!"
+            exit 1
+          fi
+
           ssh -i aws_key.pem ubuntu@$INSTANCE_IP << 'EOF'
             # Stop and remove any existing container with the same name
             if [ "$(docker ps -aq -f name=moto-class-container)" ]; then
