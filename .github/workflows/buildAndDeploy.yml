@@ -40,7 +40,7 @@ jobs:
       - name: Push Docker image to Docker Hub
         run: docker push chichia/moto:latest
 
-      - name: Pull and run Docker container
+      - name: Pull and run Docker containers
         env:
           PRIVATE_KEY: ${{ secrets.AWS_PEM }}
           INSTANCE_IP: ${{ secrets.AWS_IP_ADDRESS }}
@@ -50,15 +50,32 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H $INSTANCE_IP >> ~/.ssh/known_hosts
           ssh -i aws_key.pem ubuntu@$INSTANCE_IP << 'EOF'
-          # Stop and remove any existing container with the same name
+          # Stop and remove any existing PostgreSQL container
+          if [ "$(docker ps -aq -f name=my-postgres)" ]; then
+            docker stop my-postgres
+            docker rm my-postgres
+          fi
+
+          # Run the PostgreSQL container
+          sudo docker run --name my-postgres \
+            -e POSTGRES_USER=moto_db_qbkd_us \
+            -e POSTGRES_PASSWORD=hU24sxadpc6RSdLOpEd1d4p6mCYUzYeW \
+            -e POSTGRES_DB=moto_db_qbkd \
+            -p 5432:5432 \
+            -d postgres:latest
+
+          # Stop and remove any existing application container
           if [ "$(docker ps -aq -f name=olodo-class-container)" ]; then
             docker stop olodo-class-container
             docker rm olodo-class-container
           fi
-          
-          # Pull the latest image
-          sudo docker pull chichia/moto:latest
 
-          # Run the Docker container with the environment file
-          sudo docker run -d --env-file=/home/ubuntu/.env --name olodo-class-container chichia/moto:latest
+          # Run the application container linked to PostgreSQL
+          sudo docker run --name olodo-class-container \
+            --link my-postgres:postgres \
+            -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/moto_db_qbkd \
+            -e SPRING_DATASOURCE_USERNAME=moto_db_qbkd_us \
+            -e SPRING_DATASOURCE_PASSWORD=hU24sxadpc6RSdLOpEd1d4p6mCYUzYeW \
+            -p 8080:8080 \
+            -d chichia/moto:latest
           EOF
