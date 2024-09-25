@@ -58,9 +58,9 @@ jobs:
 
           # Run the application container with database connection to Render
           docker run --name olodo-class-container \
-            -e SPRING_DATASOURCE_URL=jdbc:postgresql://dpg-cr7hlkqj1k6c739sin10-a.oregon-postgres.render.com/dev_db_fnum \
-            -e SPRING_DATASOURCE_USERNAME=dev_db_fnum_user \
-            -e SPRING_DATASOURCE_PASSWORD=nO42mUEPFHVhP7vycanCnSDM8PqbmK3t \
+            -e SPRING_DATASOURCE_URL=jdbc:postgresql://dpg-crpv0h8gph6c73a46c5g-a.oregon-postgres.render.com/moto_db_qbkd \
+            -e SPRING_DATASOURCE_USERNAME=moto_db_qbkd_us \
+            -e SPRING_DATASOURCE_PASSWORD=hU24sxadpc6RSdLOpEd1d4p6mCYUzYeW \
             -p 8080:8080 \
             -d chichia/moto:latest
           EOF
