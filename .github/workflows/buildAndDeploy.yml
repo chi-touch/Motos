@@ -128,7 +128,7 @@ jobs:
           ssh-keyscan -H $INSTANCE_IP >> ~/.ssh/known_hosts
           ssh -i aws_key.pem ubuntu@$INSTANCE_IP << 'EOF'
             sudo docker pull chichia/moto:latest
-            sudo docker run -d -p 8082:8081 chichia/moto:latest
+            sudo docker run -d -p 8081:8081 chichia/moto:latest
           EOF
 
       - name: Pull and run Docker container
@@ -144,6 +144,6 @@ jobs:
              docker pull chichia/moto:latest
 
              # Run the new container with the correct port mapping
-             sudo docker run -d --name moto-class-container -p 8082:8081 chichia/moto:latest
+             sudo docker run -d --name moto-class-container -p 8081:8081 chichia/moto:latest
           EOF
 
