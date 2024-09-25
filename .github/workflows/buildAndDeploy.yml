@@ -56,7 +56,9 @@ jobs:
             docker rm olodo-class-container
           fi
           
-          # Pull the latest image and run it
+          # Pull the latest image
           sudo docker pull chichia/moto:latest
-          sudo docker run -d --env-file=.env --name olodo-class-container chichia/moto:latest
+
+          # Run the Docker container with the environment file
+          sudo docker run -d --env-file=/home/ubuntu/.env --name olodo-class-container chichia/moto:latest
           EOF
