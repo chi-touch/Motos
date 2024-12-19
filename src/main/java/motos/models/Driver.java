@@ -1,18 +1,18 @@
 package motos.models;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-@Setter
 @Getter
+@Setter
 @Entity
-@Table(name="users")
-public class Customers {
+public class Driver {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private String phoneNumber;
-    private String email;
-    private String password;
+    private String licenseNumber;
+    @OneToOne
+    private Bus bus;
 }

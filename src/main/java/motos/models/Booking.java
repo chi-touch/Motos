@@ -1,18 +1,23 @@
 package motos.models;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Setter
 @Getter
 @Entity
-@Table(name="users")
-public class Customers {
+public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String name;
-    private String phoneNumber;
-    private String email;
-    private String password;
+
+    @ManyToOne
+    private Passenger passenger;
+
+    private LocalDate bookingDate;
+    private String busDetails;
+    private String sitNumber;
 }
